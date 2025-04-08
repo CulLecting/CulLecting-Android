@@ -8,7 +8,7 @@ import 'history_screen.dart';
 
 class MainScreen extends StatelessWidget {
 
-  final List<Widget> _pages = [
+  final List<Widget> _pages = [ // 여기에서 페이지 전부 관리해서 띄워줌
     HomeScreen(),
     SearchScreen(),
     HistoryScreen(),

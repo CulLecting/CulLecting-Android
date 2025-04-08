@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class CalendarViewModel extends ChangeNotifier {
+class HomeViewModel extends ChangeNotifier {
   // 선택된 날짜
   DateTime _selectedDay = DateTime.now();
   DateTime get selectedDay => _selectedDay;
@@ -67,3 +67,4 @@ class CalendarViewModel extends ChangeNotifier {
     return DateTime(date.year, date.month, date.day);
   }
 }
+
