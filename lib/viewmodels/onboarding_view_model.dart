@@ -6,6 +6,7 @@ class OnboardingViewModel extends ChangeNotifier {
   final List<String> _selectedCities = [];
   final List<String> _selectedCultures = [];
 
+  bool isSkip = false;
 
 
   List<String> get selectedCities => _selectedCities;
@@ -50,9 +51,14 @@ class OnboardingViewModel extends ChangeNotifier {
   }
 
   void moveBackPage(){
-    print("눌림");
     page -=1;
     buttonText = "다음";
+    notifyListeners();
+  }
+
+  void moveEndPage(){
+    page = 3;
+    buttonText = "시작하기";
     notifyListeners();
   }
 

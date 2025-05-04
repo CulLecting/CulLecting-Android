@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.example_tabbar2"
+    namespace = "com.cullecting"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -19,16 +19,19 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
-    defaultConfig {
+    defaultConfig { //com.example.example_tabbar2
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.example_tabbar2"
+        applicationId = "com.cullecting"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
     }
+
+
 
     buildTypes {
         release {

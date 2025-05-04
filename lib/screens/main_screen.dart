@@ -3,15 +3,15 @@ import 'package:provider/provider.dart';
 import '../viewmodels/bottom_nav_viewmodel.dart';
 import 'Home_screen.dart';
 import 'search_screen.dart';
-import 'mypage_screen.dart';
-import 'history_screen.dart';
+import 'mypage/mypage_screen.dart';
+import 'record/history_screen.dart';
 
 class MainScreen extends StatelessWidget {
 
   final List<Widget> _pages = [ // 여기에서 페이지 전부 관리해서 띄워줌
     HomeScreen(),
-    SearchScreen(),
     HistoryScreen(),
+    SearchScreen(),
     MyPageScreen(),
   ];
 
@@ -37,8 +37,8 @@ class MainScreen extends StatelessWidget {
       onTap: (index) => viewModel.changeTab(index),
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈',),
-        BottomNavigationBarItem(icon: Icon(Icons.search), label: '검색'),
         BottomNavigationBarItem(icon: Icon(Icons.history), label: '기록'),
+        BottomNavigationBarItem(icon: Icon(Icons.search), label: '검색'),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: '마이페이지'),
       ],
     );

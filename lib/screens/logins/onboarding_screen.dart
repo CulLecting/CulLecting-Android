@@ -1,7 +1,8 @@
+import 'package:example_tabbar2/constant/constants.dart';
 import 'package:flutter/material.dart';
-import '../componenets/component.dart'; // cityButton 포함
+import '../../componenets/component.dart'; // cityButton 포함
 import 'package:provider/provider.dart';
-import '../viewmodels/onboarding_view_model.dart';
+import '../../viewmodels/onboarding_view_model.dart';
 
 class OnboardingScreen extends StatelessWidget {
   final List<String> guList = [
@@ -145,7 +146,10 @@ class OnboardingScreen extends StatelessWidget {
     return Consumer<OnboardingViewModel>(
       builder: (context, viewModel, _) {
         return TextButton(
-          onPressed: () {},
+          onPressed: () {
+            viewModel.isSkip = true;
+            viewModel.moveEndPage();
+          },
           child: Text(
             "건너뛰기",
             style: TextStyle(fontSize: 14, color: Color(0xFF6F6F6F)),
@@ -207,39 +211,20 @@ class OnboardingScreen extends StatelessWidget {
 
         return ElevatedButton(
           onPressed:
-              selectedCount > 0
+              selectedCount > 0 || viewModel.isSkip
                   ? () {
                     if (viewModel.page == 1) {
                       viewModel.moveNextPage(); // 예: 1 -> 2
                     } else if (viewModel.page == 2) {
                       viewModel.moveNextPage(); // 예: 2 -> 3
                     } else if (viewModel.page == 3) {
+                      print("선택된거: ${viewModel.selectedCities},${viewModel.selectedCultures}");
                       viewModel.loadMainScreen(context);
                       // 마지막 페이지면 완료 처리
                     }
                   }
                   : null,
-
-          style: ButtonStyle(
-            animationDuration: Duration.zero,
-            backgroundColor: MaterialStateProperty.resolveWith<Color>((
-              Set<MaterialState> states,
-            ) {
-              return const Color(0xFF2F2F2F); // 🔹 항상 동일한 배경색
-            }),
-            foregroundColor: MaterialStateProperty.resolveWith<Color>((
-              Set<MaterialState> states,
-            ) {
-              if (states.contains(MaterialState.disabled)) {
-                return const Color(0xFFB0B0B0); // 🔸 비활성화 시 텍스트 색
-              }
-              return Colors.white; // 🔹 활성화 시 텍스트 색
-            }),
-            minimumSize: MaterialStateProperty.all(const Size(327, 56)),
-            shape: MaterialStateProperty.all(
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-            ),
-          ),
+          style: undefinedButton, //비활성화 되면 글자만 색이 흐려짐
           child: Text(
             viewModel.buttonText,
             style: const TextStyle(

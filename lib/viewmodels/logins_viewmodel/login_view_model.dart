@@ -1,19 +1,28 @@
+import 'package:example_tabbar2/models/user_model.dart';
+import 'package:example_tabbar2/screens/logins/change_password_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:example_tabbar2/screens/main_screen.dart';
-import 'package:example_tabbar2/screens/make_account_screen.dart';
+import 'package:example_tabbar2/screens/logins/make_account_screen.dart';
+import '../../screens/logins/onboarding_screen.dart';
 import 'dart:async';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../providers/user_provider.dart';
 
 class LoginViewModel extends ChangeNotifier {
-  final Dio _dio = Dio(BaseOptions(baseUrl: 'https://puppyting.site'));
+
+
+  final Dio _dio = Dio(BaseOptions(baseUrl: 'https://cullecting.site'));
   final FlutterSecureStorage _storage = FlutterSecureStorage();
+  final TokenManager _tokenManager = TokenManager();
 
   // 🔹 TextEditingController 추가
   final TextEditingController idController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
+  final TextEditingController newpasswordController = TextEditingController();
   final TextEditingController verifyController = TextEditingController();
   final TextEditingController nicknameController = TextEditingController();
   final TextEditingController passwordConfirmController = TextEditingController();
@@ -66,8 +75,13 @@ class LoginViewModel extends ChangeNotifier {
   String get timerText =>
       "${_remainingTime.inMinutes.remainder(60).toString()}:${_remainingTime.inSeconds.remainder(60).toString().padLeft(2, '0')}";
 
-
-
+  UserProvider? _userProvider;
+  LoginViewModel({UserProvider? userProvider}) {
+    _userProvider = userProvider;
+  }
+  void updateUserProvider(UserProvider userProvider) {
+    _userProvider = userProvider;
+  }
 
   //타이머 정의
   Duration _remainingTime = Duration(seconds: 180);
@@ -106,7 +120,7 @@ class LoginViewModel extends ChangeNotifier {
   }
 
   void validatePasswordCondition() { //패스워드 조건 확인 함수
-    final password = passwordController.text;
+    final password = newpasswordController.text;
 
     // 정규식 검사
     final regex = RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$');
@@ -121,9 +135,9 @@ class LoginViewModel extends ChangeNotifier {
   }
 
   void validatePassword() { //password확인이랑 서로 일치하는 지 확인
-    if (passwordController.text.isNotEmpty &&
+    if (newpasswordController.text.isNotEmpty &&
         passwordConfirmController.text.isNotEmpty) {
-      if (passwordController.text != passwordConfirmController.text) {
+      if (newpasswordController.text != passwordConfirmController.text) {
         _passwordErrorMessage = "비밀번호가 일치하지 않아요";
       } else {
         _passwordErrorMessage = null;
@@ -146,9 +160,15 @@ class LoginViewModel extends ChangeNotifier {
     );
   }
 
+  void navigateToChangePw(BuildContext context){
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ChangePasswordScreen()), // 회원가입 화면으로 이동
+    );
+  }
+
   void statusUpdate() { // UI 업데이트용 함수
     notifyListeners();
-    print("상태2: ${isVerified}");
   }
 
   // 🔹 비밀번호 가시성 토글
@@ -185,7 +205,7 @@ class LoginViewModel extends ChangeNotifier {
     super.dispose();
   }
 
-  Future<void> verifyEmailCallButtonPressed() async {
+  Future<void> verifyEmailCallButtonPressed() async { ///이메일 인증요청
     if (_isVerificationInProgress) return null; //isVerificationInProgress가 돌고 있는 한 더블클릭은 방지됨!
     _isEmailVerifyCall = true;
     _isVerificationInProgress = true;
@@ -195,7 +215,7 @@ class LoginViewModel extends ChangeNotifier {
 
     try {
       Response response = await _dio.post(
-        '/member/send',
+        '/member/email-verifications',
         data: {"email": emailController.text},
         options: Options(headers: {"Content-Type": "application/json"}),
       );
@@ -208,7 +228,7 @@ class LoginViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> verify() async {
+  Future<void> verify() async { ///인증번호 확인하기
     String? code = verifyController.text;
     String? email = emailController.text;
     if (code.isEmpty) {
@@ -219,16 +239,17 @@ class LoginViewModel extends ChangeNotifier {
 
     try {
       Response response = await _dio.post(
-        '/member/verify',
+        '/member/email-verifications/verify',
         data: {"email": email, "code": code},
         options: Options(headers: {"Content-Type": "application/json"}),
       );
+      print("인증결과: ${response.data["message"]}, ${response.statusCode}");
 
-      if (response.statusCode == 200 && response.data["result"] == "인증 성공") {
+      if (response.statusCode == 200 && response.data["message"] == "이메일 인증 성공") {
 
         _isVerified = true;
         _verifyErrorMessage = null;
-        _verificationToken = response.data["token"];
+        _verificationToken = response.data["data"]["token"];
         notifyListeners();
         print("인증 완료");
 
@@ -250,15 +271,12 @@ class LoginViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> makeAccount() async { //isverified==true, 비밀번호==비밀번호 확인, 닉네임!=null, isChecked==true이어야함.
-    if (isVerified==false){
-
-    }
-
+  Future<bool> makeAccount(BuildContext context) async { //isverified==true, 비밀번호==비밀번호 확인, 닉네임!=null, isChecked==true이어야함.
+    print("토큰: ${_verificationToken}");
     try {
       Response response = await _dio.post(
-        '/member/signup',
-        data: {"email": emailController.text, "password":passwordController.text, "nickname":nicknameController.text},
+        '/member',
+        data: {"email": emailController.text, "password":newpasswordController.text, "nickname":nicknameController.text},
         options: Options(
           headers: {
             "Content-Type": "application/json",
@@ -269,6 +287,9 @@ class LoginViewModel extends ChangeNotifier {
       print("받은거: ${response.data}");
       if (response.statusCode == 200) {
         _isEmailVerifyCall = true;
+        _isVerificationInProgress = false;
+        notifyListeners();
+        return true;
       }
     } on DioException catch (e) { // ✅ DioException을 캐치
       print("🚨 Dio 오류 발생 🚨");
@@ -280,11 +301,11 @@ class LoginViewModel extends ChangeNotifier {
       print("❌ 일반 오류 발생: $e");
     } finally {
       _isVerificationInProgress = false;
-      notifyListeners();
+      return false;
     }
   }
 
-  Future<bool> login() async {
+  Future<bool> login() async { ///로그인
     _isLoading = true;
     notifyListeners();
 
@@ -299,13 +320,68 @@ class LoginViewModel extends ChangeNotifier {
           "Content-Type": "application/json",
         }),
       );
+      print("이메일: ${idController.text}, 비밀번호: ${passwordController.text}");
+
+      if (response.statusCode == 200 && response.data != null) {
+        FocusManager.instance.primaryFocus?.unfocus();
+        String accessToken = response.data["data"]["accessToken"];
+        String refreshToken = response.data["data"]["refreshToken"];
+
+        await _tokenManager.saveTokens(
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+        );
+
+        _dio.options.headers["Authorization"] = "Bearer $accessToken";
+
+        _isLoading = false;
+
+        _initializeUser();
+        notifyListeners();
+        print("로그인 성공 토큰: ${response.data}");
+        return true; // ✅ 로그인 성공 시 true 반환
+      }
+    } catch (e) {
+      print("로그인 오류: $e");
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+
+    return false; // ✅ 로그인 실패 시 false 반환
+  }
+
+  Future<void> _initializeUser() async {
+    final token = await _storage.read(key: "accessToken");
+    if (token != null) {
+      print("시험삼아");
+      await _userProvider!.fetchUserFromServer(token);
+      print("이름: ${_userProvider!.user.nickname}");
+    }
+  }
+
+  Future<bool> onboardingLogin() async { ///로그인
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await _dio.post(
+        '/member/login',
+        data: {
+          "email": emailController.text,
+          "password": newpasswordController.text,
+        },
+        options: Options(headers: {
+          "Content-Type": "application/json",
+        }),
+      );
 
       if (response.statusCode == 200 && response.data != null) {
         String accessToken = response.data["accessToken"];
-        //String refreshToken = response.data["refreshToken"];
+        String refreshToken = response.data["refreshToken"];
 
         await _storage.write(key: "accessToken", value: accessToken);
-        //await _storage.write(key: "refreshToken", value: refreshToken);
+        await _storage.write(key: "refreshToken", value: refreshToken);
 
         _dio.options.headers["Authorization"] = "Bearer $accessToken";
 
@@ -323,6 +399,13 @@ class LoginViewModel extends ChangeNotifier {
     }
 
     return false; // ✅ 로그인 실패 시 false 반환
+  }
+
+  void loadOnboardingScreen(BuildContext context){
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => OnboardingScreen()),
+    );
   }
 
   void loadMainScreen(BuildContext context) {
@@ -369,5 +452,36 @@ class LoginViewModel extends ChangeNotifier {
 
       },
     );
+  }
+}
+
+
+class TokenManager {
+  // Flutter Secure Storage 인스턴스 생성
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
+  // 토큰 저장
+  Future<void> saveTokens({
+    required String accessToken,
+    required String refreshToken,
+  }) async {
+    await _storage.write(key: 'accessToken', value: accessToken);
+    await _storage.write(key: 'refreshToken', value: refreshToken);
+  }
+
+  // 토큰 읽기
+  Future<Map<String, String?>> getTokens() async {
+    String? accessToken = await _storage.read(key: 'accessToken');
+    String? refreshToken = await _storage.read(key: 'refreshToken');
+    return {
+      'accessToken': accessToken,
+      'refreshToken': refreshToken,
+    };
+  }
+
+  // 토큰 삭제 (로그아웃 시)
+  Future<void> deleteTokens() async {
+    await _storage.delete(key: 'accessToken');
+    await _storage.delete(key: 'refreshToken');
   }
 }
